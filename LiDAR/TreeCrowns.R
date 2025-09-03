@@ -1,0 +1,33 @@
+library(lidR)
+library(mapview)
+library(ggplot2)
+library(rgdal)
+library(raster)
+library(sp)
+library(sf)
+lidar<-readLAS(files=c('G:\\Shared drives\\LL   Operations\\01.1 Projects Spain & Portugal\\03. Drone&GIS\\7. Cartographic analysis\\Analysis_For_Product\\Vega\\LiDAR\\LAS\\Clipped.las'))
+lidar_norm1 <- normalize_height(lidar, knnidw())
+chm_p2r_05 <- rasterize_canopy(lidar_norm1, 1, p2r(subcircle = 0.2), pkg = "terra")
+kernel <- matrix(1,3,3)
+chm_p2r_05_smoothed <- terra::focal(chm_p2r_05, w = kernel, fun = median, na.rm = TRUE)
+ttops_chm_p2r_05_smoothed <- locate_trees(chm_p2r_05_smoothed, lmf(5))
+algo <- dalponte2016(chm_p2r_05_smoothed, ttops_chm_p2r_05_smoothed)
+las <- segment_trees(lidar_norm1, algo) # segment point cloud
+crowns <- crown_metrics(las, func = .stdtreemetrics, geom = "convex")
+plot(crowns["convhull_area"], main = "Crown area (convex hull)")
+writeRaster(crowns, 'crowns.tiff') #no funciona porque es un vectorial
+st_write(crowns, dsn='C:\\Geodata', layer='crowns.shp', driver = 'ESRI Shapefile')
+
+#versión con menor resolución
+lidar<-readLAS(files=c('H:\\Shared drives\\LL   Operations\\01.1 Projects Spain & Portugal\\03. Drone&GIS\\7. Cartographic analysis\\FCC_James\\Vega\\LiDAR\\LAS\\Clipped.las'))
+lidar_norm1 <- normalize_height(lidar, knnidw())
+chm_p2r_05 <- rasterize_canopy(lidar_norm1, 0.5, p2r(subcircle = 0.2), pkg = "terra")
+kernel <- matrix(1,3,3)
+chm_p2r_05_smoothed <- terra::focal(chm_p2r_05, w = kernel, fun = median, na.rm = TRUE)
+ttops_chm_p2r_05_smoothed <- locate_trees(chm_p2r_05_smoothed, lmf(5))
+algo <- dalponte2016(chm_p2r_05_smoothed, ttops_chm_p2r_05_smoothed)
+las <- segment_trees(lidar_norm1, algo) # segment point cloud
+crowns <- crown_metrics(las, func = .stdtreemetrics, geom = "convex")
+plot(crowns["convhull_area"], main = "Crown area (convex hull)")
+writeRaster(crowns, 'crowns.tiff')
+st_write(crowns, dsn='C:\\Geodata', layer='crowns.shp', driver = 'ESRI Shapefile')
