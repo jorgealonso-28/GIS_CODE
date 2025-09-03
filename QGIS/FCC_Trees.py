@@ -1,3 +1,4 @@
+# To be used with a polygonal geojson and a vector file representing the tree crowns of that area
 """
 Model exported as python.
 Name : modelo_FCC
